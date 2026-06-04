@@ -1,0 +1,590 @@
+
+<h2 class="sr-only">Dashboard quản lý chi phí xây dựng — theo dõi ngân sách, chi phí thực tế và công nợ theo dự án</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.nav{display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:8px;flex-wrap:wrap}
+.nav-btn{padding:6px 14px;font-size:12px;cursor:pointer;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-secondary)}
+.nav-btn.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500;border-color:var(--color-border-secondary)}
+.pane{display:none}.pane.active{display:block}
+.krow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.25rem}
+.kcard{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.klabel{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.kval{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.ksub{font-size:10px;color:var(--color-text-tertiary);margin-top:3px}
+.red{color:#A32D2D}.green{color:#166534}.amber{color:#854F0B}
+.sec{font-size:11px;font-weight:500;color:var(--color-text-secondary);margin:1.2rem 0 8px;padding-bottom:4px;border-bottom:0.5px solid var(--color-border-tertiary);text-transform:uppercase;letter-spacing:.04em}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{background:var(--color-background-secondary);padding:8px 10px;text-align:left;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);font-size:11px}
+.tbl td{padding:8px 10px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--color-background-secondary)}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.pill-r{background:#FEE2E2;color:#991B1B}
+.pill-g{background:#D1FAE5;color:#065F46}
+.pill-a{background:#FEF3C7;color:#92400E}
+.pill-b{background:#DBEAFE;color:#1E40AF}
+.pill-gy{background:#F3F4F6;color:#374151}
+@media(prefers-color-scheme:dark){
+.pill-r{background:#450a0a;color:#fca5a5}.pill-g{background:#052e16;color:#a7f3d0}
+.pill-a{background:#451a03;color:#fde68a}.pill-b{background:#1e3a5f;color:#93c5fd}
+.pill-gy{background:#1f2937;color:#9ca3af}
+}
+.alert{border-left:3px solid;padding:8px 12px;margin-bottom:6px;font-size:11px;border-radius:0}
+.al-r{border-color:#E24B4A;background:#FEF2F2;color:#7F1D1D}
+.al-a{border-color:#F59E0B;background:#FFFBEB;color:#78350F}
+.al-g{border-color:#10B981;background:#F0FDF4;color:#064E3B}
+@media(prefers-color-scheme:dark){
+.al-r{background:#450a0a;color:#fca5a5}.al-a{background:#451a03;color:#fde68a}.al-g{background:#052e16;color:#a7f3d0}
+}
+.upload-zone{border:1.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:2rem;text-align:center;cursor:pointer;transition:background .15s;margin-bottom:1rem}
+.upload-zone:hover,.upload-zone.drag{background:var(--color-background-secondary)}
+.upload-zone i{font-size:28px;color:var(--color-text-tertiary);display:block;margin-bottom:8px}
+.upload-zone .u-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.upload-zone .u-sub{font-size:11px;color:var(--color-text-secondary)}
+.file-list{display:flex;flex-direction:column;gap:6px;margin-bottom:1rem}
+.file-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary)}
+.file-icon{width:32px;height:32px;border-radius:var(--border-radius-md);background:var(--color-background-info);display:flex;align-items:center;justify-content:center;color:var(--color-text-info);font-size:16px;flex-shrink:0}
+.file-info{flex:1;min-width:0}
+.file-name{font-size:12px;font-weight:500;color:var(--color-text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-meta{font-size:10px;color:var(--color-text-tertiary);margin-top:2px}
+.file-actions{display:flex;gap:6px}
+.icon-btn{width:28px;height:28px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);font-size:14px}
+.icon-btn:hover{background:var(--color-background-secondary)}
+.progress-bar{width:100%;height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:3px;transition:width .3s}
+.bar-g{background:#16a34a}.bar-a{background:#d97706}.bar-r{background:#dc2626}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:11px;font-weight:500;color:var(--color-text-secondary)}
+.form-group input,.form-group select{font-size:12px;padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);padding:1.25rem;width:min(520px,calc(100vw - 2rem));max-height:80vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.modal-title{font-size:14px;font-weight:500;color:var(--color-text-primary)}
+.btn-row{display:flex;justify-content:flex-end;gap:8px;margin-top:1rem}
+.btn-primary{padding:7px 16px;font-size:12px;font-weight:500;border-radius:var(--border-radius-md);border:none;background:#1a1a1a;color:#fff;cursor:pointer}
+@media(prefers-color-scheme:dark){.btn-primary{background:#e5e5e5;color:#1a1a1a}}
+.btn-secondary{padding:7px 16px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);cursor:pointer}
+.sparkline-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
+.spark-label{width:90px;flex-shrink:0;color:var(--color-text-secondary);text-align:right}
+.spark-track{flex:1;background:var(--color-background-secondary);border-radius:3px;height:16px;overflow:hidden}
+.spark-fill{height:100%;display:flex;align-items:center;padding-left:6px;font-size:9px;font-weight:500;color:#fff;white-space:nowrap}
+.chart-wrap{position:relative;width:100%;height:220px;margin-bottom:1rem}
+.summary-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:500;margin-right:4px}
+.empty-state{text-align:center;padding:2.5rem;color:var(--color-text-tertiary);font-size:12px}
+.empty-state i{font-size:32px;display:block;margin-bottom:8px}
+</style>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showTab('overview')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Tổng quan</button>
+  <button class="nav-btn" onclick="showTab('projects')"><i class="ti ti-building-skyscraper" aria-hidden="true"></i> Dự án</button>
+  <button class="nav-btn" onclick="showTab('costs')"><i class="ti ti-receipt" aria-hidden="true"></i> Chi phí</button>
+  <button class="nav-btn" onclick="showTab('ar')"><i class="ti ti-cash" aria-hidden="true"></i> Công nợ</button>
+  <button class="nav-btn" onclick="showTab('upload')"><i class="ti ti-folder-up" aria-hidden="true"></i> Cập nhật dữ liệu</button>
+</div>
+
+<!-- TAB: OVERVIEW -->
+<div id="tab-overview" class="pane active">
+  <div id="krow-overview" class="krow"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem">
+    <div>
+      <div class="sec">Chi phí theo dự án</div>
+      <div class="chart-wrap"><canvas id="costChart" role="img" aria-label="Biểu đồ chi phí theo dự án"></canvas></div>
+    </div>
+    <div>
+      <div class="sec">Tiến độ ngân sách</div>
+      <div id="budget-bars"></div>
+    </div>
+  </div>
+  <div class="sec">Cảnh báo</div>
+  <div id="alerts-list"></div>
+</div>
+
+<!-- TAB: PROJECTS -->
+<div id="tab-projects" class="pane">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+    <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)">Danh sách dự án</div>
+    <button class="btn-primary" onclick="openAddProject()"><i class="ti ti-plus" aria-hidden="true"></i> Thêm dự án</button>
+  </div>
+  <div id="project-table-wrap"></div>
+</div>
+
+<!-- TAB: COSTS -->
+<div id="tab-costs" class="pane">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+    <div>
+      <select id="cost-filter" onchange="renderCosts()" style="font-size:12px;padding:6px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)">
+        <option value="">Tất cả dự án</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="openAddCost()"><i class="ti ti-plus" aria-hidden="true"></i> Thêm chi phí</button>
+  </div>
+  <div id="cost-table-wrap"></div>
+</div>
+
+<!-- TAB: AR / CÔNG NỢ -->
+<div id="tab-ar" class="pane">
+  <div class="sec">Tình trạng thu hồi công nợ</div>
+  <div id="ar-summary" class="krow"></div>
+  <div id="ar-table-wrap"></div>
+</div>
+
+<!-- TAB: UPLOAD -->
+<div id="tab-upload" class="pane">
+  <div class="sec">Cập nhật dữ liệu từ file</div>
+  <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+    <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+    <div class="u-title">Kéo thả hoặc nhấn để tải file lên</div>
+    <div class="u-sub">Hỗ trợ: .xlsx, .csv, .json — Dữ liệu chi phí, hợp đồng, công nợ</div>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx,.csv,.json" style="display:none" multiple onchange="handleFileSelect(event)">
+  
+  <div class="sec">File đã tải lên</div>
+  <div id="file-list-wrap">
+    <div class="empty-state"><i class="ti ti-folder-open" aria-hidden="true"></i>Chưa có file nào. Tải file lên để cập nhật dữ liệu.</div>
+  </div>
+
+  <div class="sec" style="margin-top:1.5rem">Nhập dữ liệu thủ công (JSON)</div>
+  <div style="margin-bottom:8px;font-size:11px;color:var(--color-text-secondary)">Dán dữ liệu JSON theo định dạng mẫu bên dưới để cập nhật nhanh</div>
+  <textarea id="json-input" placeholder='[{"project":"Tên dự án","budget":1000000,"actual":750000,"ar":200000,"status":"Đang thi công"}]' style="width:100%;height:100px;font-size:11px;font-family:var(--font-mono);padding:10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);resize:vertical"></textarea>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button class="btn-primary" onclick="importJSON()"><i class="ti ti-database-import" aria-hidden="true"></i> Import dữ liệu</button>
+    <button class="btn-secondary" onclick="loadSampleData()">Tải dữ liệu mẫu</button>
+    <button class="btn-secondary" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i> Xuất CSV</button>
+  </div>
+  <div id="import-msg" style="margin-top:8px;font-size:11px"></div>
+</div>
+
+<!-- MODAL: THÊM DỰ ÁN -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Thêm / Sửa dự án</div>
+      <button class="icon-btn" onclick="closeModal('modal-project')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Tên dự án</label><input id="p-name" placeholder="VD: Tòa nhà ABC"></div>
+      <div class="form-group"><label class="form-label">Khách hàng</label><input id="p-client" placeholder="Tên chủ đầu tư"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Giá trị HĐ ($)</label><input id="p-contract" type="number" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Ngân sách dự toán ($)</label><input id="p-budget" type="number" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Ngày bắt đầu</label><input id="p-start" type="date"></div>
+      <div class="form-group"><label class="form-label">Ngày hoàn thành dự kiến</label><input id="p-end" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Trạng thái</label>
+        <select id="p-status">
+          <option>Đang thi công</option>
+          <option>Hoàn thành</option>
+          <option>Tạm dừng</option>
+          <option>Chờ khởi công</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">PM phụ trách</label><input id="p-pm" placeholder="Tên PM"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('modal-project')">Hủy</button>
+      <button class="btn-primary" onclick="saveProject()">Lưu dự án</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: THÊM CHI PHÍ -->
+<div class="modal-overlay" id="modal-cost">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Thêm chi phí</div>
+      <button class="icon-btn" onclick="closeModal('modal-cost')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Dự án</label>
+        <select id="c-project"></select>
+      </div>
+      <div class="form-group"><label class="form-label">Danh mục</label>
+        <select id="c-category">
+          <option>Nhân công</option><option>Vật liệu</option><option>Thiết bị</option>
+          <option>Thầu phụ</option><option>Quản lý</option><option>Khác</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Mô tả</label><input id="c-desc" placeholder="Nội dung chi phí"></div>
+      <div class="form-group"><label class="form-label">Nhà cung cấp</label><input id="c-vendor" placeholder="Tên NCC"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Số tiền ($)</label><input id="c-amount" type="number" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Ngày</label><input id="c-date" type="date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Trạng thái</label>
+        <select id="c-status"><option>Chờ duyệt</option><option>Đã duyệt</option><option>Đã thanh toán</option><option>Hủy</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Số hóa đơn</label><input id="c-invoice" placeholder="INV-001"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('modal-cost')">Hủy</button>
+      <button class="btn-primary" onclick="saveCost()">Lưu chi phí</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let projects = [];
+let costs = [];
+let uploadedFiles = [];
+let costChartInstance = null;
+let editProjectIndex = -1;
+
+function fmt(n){return new Intl.NumberFormat('vi-VN',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n)}
+function pct(a,b){return b>0?((a/b)*100).toFixed(1)+'%':'0%'}
+function fmtDate(d){return d?new Date(d).toLocaleDateString('vi-VN'):'—'}
+
+function showTab(name){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+  if(name==='overview') renderOverview();
+  if(name==='projects') renderProjects();
+  if(name==='costs') renderCosts();
+  if(name==='ar') renderAR();
+}
+
+function getProjectStats(p){
+  const cs = costs.filter(c=>c.project===p.name);
+  const actual = cs.reduce((s,c)=>s+(+c.amount||0),0);
+  const paid = cs.filter(c=>c.status==='Đã thanh toán').reduce((s,c)=>s+(+c.amount||0),0);
+  const margin = p.contract>0?((p.contract-actual)/p.contract*100):0;
+  return {actual,paid,margin};
+}
+
+function renderOverview(){
+  const totalContract = projects.reduce((s,p)=>s+(+p.contract||0),0);
+  const totalBudget = projects.reduce((s,p)=>s+(+p.budget||0),0);
+  const totalActual = costs.reduce((s,c)=>s+(+c.amount||0),0);
+  const totalAR = projects.reduce((s,p)=>{
+    const recv = costs.filter(c=>c.project===p.name&&c.status==='Đã thanh toán').reduce((a,c)=>a+(+c.amount||0),0);
+    return s + Math.max(0,(+p.contract||0) - recv);
+  },0);
+  const avgMargin = projects.length>0?projects.reduce((s,p)=>{
+    const {actual,margin}=getProjectStats(p); return s+margin;
+  },0)/projects.length:0;
+
+  document.getElementById('krow-overview').innerHTML = `
+    <div class="kcard"><div class="klabel">Tổng giá trị HĐ</div><div class="kval">${fmt(totalContract)}</div><div class="ksub">${projects.length} dự án</div></div>
+    <div class="kcard"><div class="klabel">Chi phí thực tế</div><div class="kval ${totalActual>totalBudget?'red':''}">${fmt(totalActual)}</div><div class="ksub">${pct(totalActual,totalBudget)} ngân sách</div></div>
+    <div class="kcard"><div class="klabel">Công nợ chưa thu</div><div class="kval ${totalAR>500000?'red':'amber'}">${fmt(totalAR)}</div><div class="ksub">Cần thu hồi</div></div>
+    <div class="kcard"><div class="klabel">Margin TB</div><div class="kval ${avgMargin<10?'red':avgMargin<20?'amber':'green'}">${avgMargin.toFixed(1)}%</div><div class="ksub">Mục tiêu ≥ 20%</div></div>
+  `;
+
+  const bars = document.getElementById('budget-bars');
+  if(projects.length===0){bars.innerHTML='<div class="empty-state" style="padding:1rem"><i class="ti ti-chart-bar" aria-hidden="true"></i>Chưa có dữ liệu</div>';return;}
+  bars.innerHTML = projects.map(p=>{
+    const {actual}=getProjectStats(p);
+    const budget=+p.budget||0;
+    const w=budget>0?Math.min(100,(actual/budget*100)):0;
+    const cls=w>100?'bar-r':w>80?'bar-a':'bar-g';
+    return `<div class="sparkline-row">
+      <div class="spark-label">${p.name.substring(0,12)}</div>
+      <div class="spark-track"><div class="spark-fill ${cls}" style="width:${Math.min(100,w).toFixed(0)}%">${w.toFixed(0)}%</div></div>
+    </div>`;
+  }).join('');
+
+  const alerts = document.getElementById('alerts-list');
+  let alertHtml = '';
+  projects.forEach(p=>{
+    const {actual,margin}=getProjectStats(p);
+    const ar = Math.max(0,(+p.contract||0) - costs.filter(c=>c.project===p.name&&c.status==='Đã thanh toán').reduce((s,c)=>s+(+c.amount||0),0));
+    if(ar>500000) alertHtml+=`<div class="alert al-r"><strong>[Critical]</strong> ${p.name}: Công nợ ${fmt(ar)} — vượt ngưỡng $500K</div>`;
+    if(margin<0) alertHtml+=`<div class="alert al-r"><strong>[Critical]</strong> ${p.name}: Chi phí vượt HĐ — margin ${margin.toFixed(1)}%</div>`;
+    else if(margin<10&&margin>=0) alertHtml+=`<div class="alert al-a"><strong>[Warning]</strong> ${p.name}: Margin thấp ${margin.toFixed(1)}% — dưới ngưỡng 10%</div>`;
+  });
+  if(!alertHtml) alertHtml='<div class="alert al-g"><strong>[OK]</strong> Không có cảnh báo — tất cả dự án trong ngưỡng cho phép</div>';
+  alerts.innerHTML=alertHtml;
+
+  renderCostChart();
+}
+
+function renderCostChart(){
+  const ctx = document.getElementById('costChart');
+  if(!ctx) return;
+  if(costChartInstance) costChartInstance.destroy();
+  if(projects.length===0) return;
+  const labels = projects.map(p=>p.name.substring(0,14));
+  const budgetData = projects.map(p=>+p.budget||0);
+  const actualData = projects.map(p=>getProjectStats(p).actual);
+  costChartInstance = new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Ngân sách',data:budgetData,backgroundColor:'#d1d5db',borderRadius:3},
+      {label:'Thực tế',data:actualData,backgroundColor:'#2563eb',borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'K',font:{size:10}}}}}
+  });
+}
+
+function renderProjects(){
+  const wrap = document.getElementById('project-table-wrap');
+  if(projects.length===0){wrap.innerHTML='<div class="empty-state"><i class="ti ti-building-skyscraper" aria-hidden="true"></i>Chưa có dự án. Nhấn "Thêm dự án" hoặc import dữ liệu.</div>';return;}
+  const statusPill={'Đang thi công':'pill-b','Hoàn thành':'pill-g','Tạm dừng':'pill-a','Chờ khởi công':'pill-gy'};
+  wrap.innerHTML=`<table class="tbl">
+    <thead><tr><th>Dự án</th><th>Khách hàng</th><th>Giá trị HĐ</th><th>Ngân sách</th><th>Thực tế</th><th>Margin</th><th>Trạng thái</th><th>PM</th><th></th></tr></thead>
+    <tbody>${projects.map((p,i)=>{
+      const {actual,margin}=getProjectStats(p);
+      const mc=margin<0?'red':margin<10?'amber':'green';
+      return `<tr>
+        <td style="font-weight:500">${p.name}</td>
+        <td>${p.client||'—'}</td>
+        <td>${fmt(+p.contract||0)}</td>
+        <td>${fmt(+p.budget||0)}</td>
+        <td>${fmt(actual)}</td>
+        <td class="${mc}">${margin.toFixed(1)}%</td>
+        <td><span class="pill ${statusPill[p.status]||'pill-gy'}">${p.status}</span></td>
+        <td>${p.pm||'—'}</td>
+        <td><button class="icon-btn" onclick="editProject(${i})" title="Sửa"><i class="ti ti-edit" aria-hidden="true"></i></button>
+            <button class="icon-btn" onclick="deleteProject(${i})" title="Xóa"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function renderCosts(){
+  const filter = document.getElementById('cost-filter').value;
+  const data = filter ? costs.filter(c=>c.project===filter) : costs;
+  const wrap = document.getElementById('cost-table-wrap');
+  const statusPill={'Chờ duyệt':'pill-gy','Đã duyệt':'pill-b','Đã thanh toán':'pill-g','Hủy':'pill-r'};
+  if(data.length===0){wrap.innerHTML='<div class="empty-state"><i class="ti ti-receipt" aria-hidden="true"></i>Chưa có giao dịch chi phí nào.</div>';return;}
+  wrap.innerHTML=`<table class="tbl">
+    <thead><tr><th>Ngày</th><th>Dự án</th><th>Danh mục</th><th>Mô tả</th><th>Nhà cung cấp</th><th>Số tiền</th><th>Trạng thái</th><th>Hóa đơn</th></tr></thead>
+    <tbody>${data.slice().reverse().map(c=>`<tr>
+      <td>${fmtDate(c.date)}</td>
+      <td>${c.project}</td>
+      <td><span class="pill pill-gy">${c.category}</span></td>
+      <td>${c.desc||'—'}</td>
+      <td>${c.vendor||'—'}</td>
+      <td style="font-weight:500">${fmt(+c.amount||0)}</td>
+      <td><span class="pill ${statusPill[c.status]||'pill-gy'}">${c.status}</span></td>
+      <td>${c.invoice||'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderAR(){
+  const summary = document.getElementById('ar-summary');
+  const wrap = document.getElementById('ar-table-wrap');
+  if(projects.length===0){summary.innerHTML='';wrap.innerHTML='<div class="empty-state"><i class="ti ti-cash" aria-hidden="true"></i>Chưa có dữ liệu.</div>';return;}
+  let rows='';
+  let totalAR=0,totalPaid=0,totalContract=0;
+  projects.forEach(p=>{
+    const paidAmount = costs.filter(c=>c.project===p.name&&c.status==='Đã thanh toán').reduce((s,c)=>s+(+c.amount||0),0);
+    const ar = Math.max(0,(+p.contract||0)-paidAmount);
+    const paidPct = p.contract>0?(paidAmount/p.contract*100):0;
+    const cls=ar>500000?'pill-r':ar>200000?'pill-a':'pill-g';
+    totalAR+=ar; totalPaid+=paidAmount; totalContract+=(+p.contract||0);
+    rows+=`<tr>
+      <td style="font-weight:500">${p.name}</td>
+      <td>${p.client||'—'}</td>
+      <td>${fmt(+p.contract||0)}</td>
+      <td>${fmt(paidAmount)}</td>
+      <td><span class="pill ${cls}">${fmt(ar)}</span></td>
+      <td><div class="progress-bar"><div class="progress-fill ${paidPct>80?'bar-g':paidPct>50?'bar-a':'bar-r'}" style="width:${paidPct.toFixed(0)}%"></div></div><div style="font-size:10px;color:var(--color-text-tertiary);margin-top:2px">${paidPct.toFixed(1)}% đã thu</div></td>
+    </tr>`;
+  });
+  summary.innerHTML=`
+    <div class="kcard"><div class="klabel">Tổng HĐ</div><div class="kval">${fmt(totalContract)}</div></div>
+    <div class="kcard"><div class="klabel">Đã thu</div><div class="kval green">${fmt(totalPaid)}</div></div>
+    <div class="kcard"><div class="klabel">Còn phải thu</div><div class="kval ${totalAR>500000?'red':'amber'}">${fmt(totalAR)}</div></div>
+    <div class="kcard"><div class="klabel">Tỷ lệ thu hồi</div><div class="kval">${pct(totalPaid,totalContract)}</div></div>
+  `;
+  wrap.innerHTML=`<table class="tbl">
+    <thead><tr><th>Dự án</th><th>Khách hàng</th><th>Giá trị HĐ</th><th>Đã thu</th><th>Còn phải thu</th><th>Tiến độ</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function updateCostFilter(){
+  const sel = document.getElementById('cost-filter');
+  if(!sel) return;
+  sel.innerHTML='<option value="">Tất cả dự án</option>'+projects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+}
+
+function openAddProject(){editProjectIndex=-1;document.getElementById('modal-project').classList.add('open');['p-name','p-client','p-contract','p-budget','p-start','p-end','p-pm'].forEach(id=>document.getElementById(id).value='');document.getElementById('p-status').value='Đang thi công';}
+function editProject(i){
+  editProjectIndex=i;
+  const p=projects[i];
+  document.getElementById('p-name').value=p.name||'';
+  document.getElementById('p-client').value=p.client||'';
+  document.getElementById('p-contract').value=p.contract||'';
+  document.getElementById('p-budget').value=p.budget||'';
+  document.getElementById('p-start').value=p.start||'';
+  document.getElementById('p-end').value=p.end||'';
+  document.getElementById('p-status').value=p.status||'Đang thi công';
+  document.getElementById('p-pm').value=p.pm||'';
+  document.getElementById('modal-project').classList.add('open');
+}
+function saveProject(){
+  const p={name:document.getElementById('p-name').value.trim(),client:document.getElementById('p-client').value.trim(),contract:+document.getElementById('p-contract').value||0,budget:+document.getElementById('p-budget').value||0,start:document.getElementById('p-start').value,end:document.getElementById('p-end').value,status:document.getElementById('p-status').value,pm:document.getElementById('p-pm').value.trim()};
+  if(!p.name){alert('Nhập tên dự án!');return;}
+  if(editProjectIndex>=0) projects[editProjectIndex]=p; else projects.push(p);
+  updateCostFilter();renderProjects();renderOverview();
+  closeModal('modal-project');
+}
+function deleteProject(i){if(confirm('Xóa dự án này?')){projects.splice(i,1);updateCostFilter();renderProjects();renderOverview();}}
+
+function openAddCost(){
+  updateCostFilter();
+  const sel=document.getElementById('c-project');
+  sel.innerHTML=projects.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');
+  document.getElementById('c-date').value=new Date().toISOString().split('T')[0];
+  ['c-desc','c-vendor','c-amount','c-invoice'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-category').value='Vật liệu';
+  document.getElementById('c-status').value='Đã thanh toán';
+  document.getElementById('modal-cost').classList.add('open');
+}
+function saveCost(){
+  const c={project:document.getElementById('c-project').value,category:document.getElementById('c-category').value,desc:document.getElementById('c-desc').value,vendor:document.getElementById('c-vendor').value,amount:+document.getElementById('c-amount').value||0,date:document.getElementById('c-date').value,status:document.getElementById('c-status').value,invoice:document.getElementById('c-invoice').value};
+  if(!c.project){alert('Chọn dự án!');return;}
+  costs.push(c);renderCosts();renderOverview();
+  closeModal('modal-cost');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function handleDragOver(e){e.preventDefault();document.getElementById('upload-zone').classList.add('drag');}
+function handleDragLeave(){document.getElementById('upload-zone').classList.remove('drag');}
+function handleDrop(e){e.preventDefault();handleDragLeave();processFiles(e.dataTransfer.files);}
+function handleFileSelect(e){processFiles(e.target.files);}
+
+function processFiles(files){
+  Array.from(files).forEach(f=>{
+    uploadedFiles.push({name:f.name,size:f.size,type:f.type,date:new Date().toLocaleString('vi-VN')});
+    if(f.name.endsWith('.json')||f.type==='application/json'){
+      const reader=new FileReader();
+      reader.onload=e=>{try{const data=JSON.parse(e.target.result);applyImportedData(data,f.name);}catch(err){showImportMsg('Lỗi đọc file JSON: '+err.message,'red');}};
+      reader.readAsText(f);
+    } else if(f.name.endsWith('.csv')){
+      const reader=new FileReader();
+      reader.onload=e=>{parseCSV(e.target.result,f.name);};
+      reader.readAsText(f);
+    }
+  });
+  renderFileList();
+}
+
+function parseCSV(text,fname){
+  const lines=text.trim().split('\n');
+  if(lines.length<2){showImportMsg('File CSV trống','red');return;}
+  const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+  const data=lines.slice(1).map(l=>{
+    const vals=l.split(',').map(v=>v.trim().replace(/"/g,''));
+    const obj={};headers.forEach((h,i)=>obj[h]=vals[i]||'');return obj;
+  });
+  applyImportedData(data,fname);
+}
+
+function applyImportedData(data,fname){
+  if(!Array.isArray(data)||data.length===0){showImportMsg('Dữ liệu rỗng hoặc không hợp lệ','red');return;}
+  const sample=data[0];
+  let imported=0;
+  if('project'in sample||'name'in sample){
+    data.forEach(d=>{
+      const name=d.project||d.name||'';
+      if(!name) return;
+      const exists=projects.find(p=>p.name===name);
+      const p={name,client:d.client||d.khachhang||'',contract:+(d.contract||d.hopDong||d.contract_value||0),budget:+(d.budget||d.nganSach||0),start:d.start||d.start_date||'',end:d.end||d.end_date||'',status:d.status||d.trangThai||'Đang thi công',pm:d.pm||''};
+      if(!exists) {projects.push(p);imported++;}
+    });
+    if(imported>0){showImportMsg(`Đã import ${imported} dự án từ ${fname}`,'green');updateCostFilter();renderProjects();renderOverview();}
+  }
+  if('amount'in sample||'chi_phi'in sample||'actual'in sample){
+    data.forEach(d=>{
+      costs.push({project:d.project||d.ten_du_an||projects[0]?.name||'',category:d.category||d.danh_muc||'Khác',desc:d.desc||d.mo_ta||'',vendor:d.vendor||d.ncc||'',amount:+(d.amount||d.chi_phi||d.actual||0),date:d.date||d.ngay||new Date().toISOString().split('T')[0],status:d.status||'Đã thanh toán',invoice:d.invoice||''});
+    });
+    showImportMsg(`Đã import ${data.length} giao dịch từ ${fname}`,'green');renderCosts();renderOverview();
+  }
+}
+
+function renderFileList(){
+  const wrap=document.getElementById('file-list-wrap');
+  if(uploadedFiles.length===0){wrap.innerHTML='<div class="empty-state"><i class="ti ti-folder-open" aria-hidden="true"></i>Chưa có file nào.</div>';return;}
+  wrap.innerHTML='<div class="file-list">'+uploadedFiles.map((f,i)=>`
+    <div class="file-item">
+      <div class="file-icon"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i></div>
+      <div class="file-info">
+        <div class="file-name">${f.name}</div>
+        <div class="file-meta">${(f.size/1024).toFixed(1)} KB · ${f.date}</div>
+      </div>
+      <div class="file-actions">
+        <button class="icon-btn" onclick="removeFile(${i})" title="Xóa"><i class="ti ti-trash" aria-hidden="true"></i></button>
+      </div>
+    </div>`).join('')+'</div>';
+}
+function removeFile(i){uploadedFiles.splice(i,1);renderFileList();}
+
+function importJSON(){
+  try{
+    const raw=document.getElementById('json-input').value.trim();
+    if(!raw){showImportMsg('Nhập dữ liệu JSON vào ô trên','amber');return;}
+    const data=JSON.parse(raw);
+    applyImportedData(Array.isArray(data)?data:[data],'manual');
+  }catch(e){showImportMsg('JSON không hợp lệ: '+e.message,'red');}
+}
+
+function showImportMsg(msg,color){
+  const el=document.getElementById('import-msg');
+  const cls={green:'green',red:'red',amber:'amber'}[color]||'';
+  el.innerHTML=`<span class="${cls}"><i class="ti ti-${color==='green'?'circle-check':color==='red'?'alert-circle':'alert-triangle'}" aria-hidden="true"></i> ${msg}</span>`;
+  setTimeout(()=>el.innerHTML='',4000);
+}
+
+function loadSampleData(){
+  projects=[
+    {name:'HJ Project',client:'HJ Corp',contract:1425000,budget:1100000,start:'2024-01-15',end:'2025-06-30',status:'Đang thi công',pm:'Nguyễn Văn A'},
+    {name:'WTP Project',client:'Water Authority',contract:1136000,budget:950000,start:'2023-06-01',end:'2024-12-31',status:'Hoàn thành',pm:'Trần Thị B'},
+    {name:'Lao Ford',client:'Ford Laos',contract:820000,budget:750000,start:'2024-03-01',end:'2025-09-30',status:'Đang thi công',pm:'Lê Văn C'},
+    {name:'Head Office',client:'Internal',contract:120990,budget:110000,start:'2024-01-01',end:'2025-12-31',status:'Đang thi công',pm:'PM D'},
+  ];
+  costs=[
+    {project:'HJ Project',category:'Vật liệu',desc:'Thép kết cấu',vendor:'Steel Co',amount:280000,date:'2024-06-15',status:'Đã thanh toán',invoice:'INV-001'},
+    {project:'HJ Project',category:'Nhân công',desc:'Nhân công tháng 6',vendor:'',amount:95000,date:'2024-06-30',status:'Đã thanh toán',invoice:''},
+    {project:'HJ Project',category:'Thầu phụ',desc:'MEP',vendor:'MEP Ltd',amount:152000,date:'2024-07-10',status:'Đã duyệt',invoice:'INV-008'},
+    {project:'WTP Project',category:'Vật liệu',desc:'Ống PVC',vendor:'Pipe Co',amount:210000,date:'2024-02-20',status:'Đã thanh toán',invoice:'INV-021'},
+    {project:'WTP Project',category:'Thiết bị',desc:'Máy bơm công nghiệp',vendor:'Pump Corp',amount:180000,date:'2024-03-15',status:'Đã thanh toán',invoice:'INV-022'},
+    {project:'WTP Project',category:'Nhân công',desc:'Nhân công Q1',vendor:'',amount:85000,date:'2024-03-31',status:'Đã thanh toán',invoice:''},
+    {project:'Lao Ford',category:'Vật liệu',desc:'Xi măng, cát, đá',vendor:'Building Mat',amount:220000,date:'2024-08-05',status:'Đã thanh toán',invoice:'INV-045'},
+    {project:'Lao Ford',category:'Nhân công',desc:'Nhân công tháng 8',vendor:'',amount:98000,date:'2024-08-31',status:'Đã thanh toán',invoice:''},
+    {project:'Head Office',category:'Quản lý',desc:'Chi phí vận hành VP',vendor:'',amount:75000,date:'2024-09-01',status:'Đã thanh toán',invoice:''},
+    {project:'Head Office',category:'Khác',desc:'Chi phí IT & phần mềm',vendor:'SaaS',amount:62315,date:'2024-09-15',status:'Đã thanh toán',invoice:'INV-099'},
+  ];
+  updateCostFilter();renderOverview();renderProjects();renderCosts();renderAR();
+  showImportMsg('Đã tải dữ liệu mẫu CBC Construction thành công!','green');
+}
+
+function exportData(){
+  const header='Dự án,Khách hàng,Giá trị HĐ,Ngân sách,Tổng chi phí,Margin%,Trạng thái\n';
+  const rows=projects.map(p=>{
+    const {actual,margin}=getProjectStats(p);
+    return `"${p.name}","${p.client||''}",${p.contract||0},${p.budget||0},${actual},${margin.toFixed(1)},${p.status}`;
+  }).join('\n');
+  const blob=new Blob(['\uFEFF'+header+rows],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='construction_costs.csv';a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.addEventListener('click',e=>{
+  ['modal-project','modal-cost'].forEach(id=>{
+    const m=document.getElementById(id);
+    if(e.target===m) m.classList.remove('open');
+  });
+});
+
+loadSampleData();
+</script>
